@@ -3,7 +3,7 @@
 
 globalThis.RESUME_CONFIG = {
   // Your Next.js app. Change to the deployed URL when you ship.
-  API_BASE: "http://localhost:3000",
+  API_BASE: "https://resume-ai-five-chi.vercel.app",
 
   // Auto-generation tuning.
   //

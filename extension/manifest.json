@@ -3,15 +3,28 @@
   "name": "Resume",
   "version": "0.1.0",
   "description": "Remembers what you were working on, and helps you pick it up again.",
-  "permissions": ["tabs", "storage", "idle", "sidePanel", "scripting"],
-  "host_permissions": ["http://localhost:3000/*"],
+  "permissions": [
+    "tabs",
+    "storage",
+    "idle",
+    "sidePanel",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://resume-ai-five-chi.vercel.app/*",
+    "http://localhost:3000/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -35,8 +48,12 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["bubble.js"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "bubble.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }

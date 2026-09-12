@@ -23,6 +23,8 @@ tabs. Resume treated them as noise and named the real thread.
 
 ## Try it (reviewers start here)
 
+**Live backend:** https://resume-ai-five-chi.vercel.app/api/health
+
 The extension is a **27 KB download** — no build step, no npm.
 
 1. Download **[`docs/resume-extension.zip`](docs/resume-extension.zip)** and unzip it
@@ -37,9 +39,9 @@ Then browse a few pages, copy something, and hit **Save Resume Point**.
 > local folder or the Web Store (which takes days to review). Load unpacked
 > is the standard way to run an unpublished extension.
 
-**The backend** it talks to is set in `config.js` → `API_BASE`. Out of the
-box that's `http://localhost:3000`, which requires the Setup section below.
-If you were given a hosted URL, put it there instead and skip setup entirely.
+**No setup required.** The extension talks to a hosted backend at
+`https://resume-ai-five-chi.vercel.app` — no Node, no API keys, no terminal.
+Everything below is only if you want to run the backend yourself.
 
 ## How it fits together
 
