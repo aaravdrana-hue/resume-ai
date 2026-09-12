@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        --bg: #08080a;
+        --card: #0c0c0e;
+        --line: rgba(255, 255, 255, 0.07);
+        --text: #f4f4f5;
+        --muted: #8a8a93;
+        --dim: #5f5f68;
+        --accent: #a78bfa;
+        --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        width: 380px;
+        margin: 0;
+        padding: 18px;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.5 ui-sans-serif, -apple-system, "Inter", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      h1 {
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin: 0;
+      }
+
+      .count { font-size: 11px; color: var(--dim); }
+
+      .label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--dim);
+        margin-bottom: 6px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+        animation: rise 0.4s var(--ease) both;
+      }
+
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: none; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .card { animation: none; }
+      }
+
+      .title {
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin-bottom: 4px;
+      }
+
+      .time { font-size: 11px; color: var(--dim); margin-bottom: 14px; }
+
+      .working { color: #d4d4d8; margin-bottom: 14px; }
+
+      ul { margin: 0 0 14px; padding-left: 16px; color: #b8b8c0; }
+      li { margin-bottom: 4px; }
+
+      .next {
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+        position: relative;
+      }
+
+      /* One accent, one meaning: this is the unfinished thread. */
+      .next .label { color: var(--accent); }
+      .next p { margin: 0; font-size: 15px; font-weight: 500; }
+
+      .row { display: flex; gap: 8px; margin-top: 14px; }
+
+      button {
+        flex: 1;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        font: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s var(--ease), transform 0.15s var(--ease);
+      }
+
+      button:active { transform: translateY(1px); }
+
+      .primary { background: #fff; color: #000; }
+      .primary:hover { background: #e4e4e7; }
+      .primary:disabled { opacity: 0.5; cursor: default; }
+
+      .ghost {
+        background: transparent;
+        border-color: var(--line);
+        color: var(--muted);
+      }
+      .ghost:hover { background: rgba(255, 255, 255, 0.04); color: var(--text); }
+
+      .empty { color: var(--dim); font-size: 13px; padding: 8px 0 14px; }
+
+      .err {
+        color: #fca5a5;
+        background: rgba(127, 29, 29, 0.25);
+        border: 1px solid rgba(127, 29, 29, 0.5);
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 12px;
+        margin-bottom: 12px;
+      }
+
+      footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 14px;
+        font-size: 11px;
+        color: var(--dim);
+      }
+
+      label.toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Resume</h1>
+      <span class="count" id="count"></span>
+    </header>
+
+    <div id="error" class="err" hidden></div>
+    <div id="body"></div>
+
+    <div class="row">
+      <button class="primary" id="generate">Save Resume Point</button>
+      <button class="ghost" id="resume" hidden>Resume</button>
+    </div>
+
+    <footer>
+      <label class="toggle">
+        <input type="checkbox" id="auto" /> Auto-capture
+      </label>
+      <span id="device"></span>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
