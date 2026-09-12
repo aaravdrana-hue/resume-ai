@@ -21,6 +21,26 @@ whatever page you landed on.
 Note what it did *not* say: the activity behind that card included YouTube
 tabs. Resume treated them as noise and named the real thread.
 
+## Try it (reviewers start here)
+
+The extension is a **27 KB download** — no build step, no npm.
+
+1. Download **[`docs/resume-extension.zip`](docs/resume-extension.zip)** and unzip it
+2. Open `chrome://extensions`
+3. Turn on **Developer mode** (top right)
+4. **Load unpacked** → select the unzipped `resume-extension` folder
+5. Click the Resume icon to open the side panel
+
+Then browse a few pages, copy something, and hit **Save Resume Point**.
+
+> A Chrome extension cannot be hosted on a URL — Chrome only installs from a
+> local folder or the Web Store (which takes days to review). Load unpacked
+> is the standard way to run an unpublished extension.
+
+**The backend** it talks to is set in `config.js` → `API_BASE`. Out of the
+box that's `http://localhost:3000`, which requires the Setup section below.
+If you were given a hosted URL, put it there instead and skip setup entirely.
+
 ## How it fits together
 
 ```
