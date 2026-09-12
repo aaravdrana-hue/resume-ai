@@ -57,6 +57,26 @@ function renderEmpty(bufferCount) {
   $("resume").hidden = true;
 }
 
+// The Save button should only invite a click when there's something new to
+// save. After a save the buffer is empty, so we disable it and say why —
+// rather than letting the user click into a "Nothing captured yet" error.
+function syncSaveButton(bufferCount) {
+  const btn = $("generate");
+  const { MIN_ACTIVITIES } = globalThis.RESUME_CONFIG;
+
+  if (bufferCount === 0) {
+    btn.disabled = true;
+    btn.textContent = "Watching for new activity…";
+    return;
+  }
+
+  btn.disabled = false;
+  btn.textContent =
+    bufferCount < MIN_ACTIVITIES
+      ? `Save Resume Point (${bufferCount})`
+      : "Save Resume Point";
+}
+
 function showError(msg) {
   $("error").textContent = msg;
   $("error").hidden = false;
@@ -76,6 +96,8 @@ async function refresh() {
     renderEmpty(state.buffer.length);
   }
 
+  syncSaveButton(state.buffer.length);
+
   // Clear the "I acted on my own" nudge once it's been seen.
   chrome.action.setBadgeText({ text: state.buffer.length ? String(state.buffer.length) : "" });
 }
@@ -88,13 +110,15 @@ $("generate").addEventListener("click", async () => {
 
   const result = await send({ type: "generate" });
 
-  btn.disabled = false;
-  btn.textContent = "Save Resume Point";
-
   if (result?.error) {
+    btn.disabled = false;
+    btn.textContent = "Save Resume Point";
     showError(result.error);
     return;
   }
+
+  // refresh() repaints the card and puts the button into its
+  // "Watching for new activity…" state, since the buffer is now empty.
   await refresh();
 });
 
