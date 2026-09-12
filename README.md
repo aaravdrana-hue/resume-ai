@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Resume
 
-## Getting Started
+An AI memory layer for your work. Resume watches what you're doing across
+tabs, and when you come back it hands you your train of thought — what you
+were doing, what mattered, and what to do next.
 
-First, run the development server:
+> Your apps remember what you did. Resume remembers *why*.
+
+## How it fits together
+
+```
+Chrome extension  ──POST /api/summarize──▶  Next.js  ──▶  Groq (LLM)
+  captures tabs,                                      ──▶  Supabase
+  copies, idle                                             │
+                  ◀──GET /api/resume-points───────────────── ┘
+```
+
+- **`extension/`** — the capture layer (MV3, vanilla JS). Side panel + the
+  return bubble. No secrets live here.
+- **`app/api/`** — summarize and read Resume Points. All keys stay here.
+- **`supabase/`** — the schema migration.
+
+## Setup
+
+You need **Node 18+**, **Chrome**, and the three values in
+[`.env.example`](.env.example).
+
+```bash
+git clone https://github.com/aaravdrana-hue/resume-ai.git
+cd resume-ai
+npm install
+cp .env.example .env.local
+```
+
+Now open `.env.local` and fill in all three values:
+
+| Variable | Where it comes from | Shared across the team? |
+|---|---|---|
+| `GROQ_API_KEY` | [console.groq.com/keys](https://console.groq.com/keys) | No — get your own, it's free |
+| `SUPABASE_URL` | Supabase → Settings → API | **Yes** — same project for everyone |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API | **Yes** — same project for everyone |
+
+Two traps that cost real time:
+
+- The Groq key **must start with `gsk_`**. An OpenAI `sk-` key returns
+  `401 Invalid API Key`.
+- Use the Supabase **secret** key (`sb_secret_…`) or legacy `service_role`
+  (`eyJ…`). The publishable/anon key can't write past RLS.
+
+Then start the backend — it must be running for the extension to work:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Database
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Only needs doing **once per Supabase project** (already done for ours). If
+you're starting fresh, paste [`supabase/schema.sql`](supabase/schema.sql)
+into the Supabase SQL Editor and run it.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Load the extension
 
-## Learn More
+1. Open `chrome://extensions`
+2. Turn on **Developer mode** (top right)
+3. **Load unpacked** → select the `extension/` folder
 
-To learn more about Next.js, take a look at the following resources:
+Click the Resume icon to open the side panel. Browse a few pages, copy
+something, then hit **Save Resume Point**.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+After you switch tabs twice, a bubble appears at the right edge of the page
+offering to hand your work back.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Using a deployed backend instead
 
-## Deploy on Vercel
+If the backend is hosted, nobody needs Node, keys, or a local server — they
+just load the extension. Point it at the deployment in two places:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. `extension/config.js` → `API_BASE`
+2. `extension/manifest.json` → `host_permissions`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Notes
+
+- `.env.local` is gitignored. Never commit real keys; share them through a
+  password manager, not chat or screenshots.
+- Restart `npm run dev` after editing `.env.local` — Next.js only reads env
+  at startup.
+- The extension holds no secrets. It only ever calls this app's API.
