@@ -6,10 +6,21 @@ import type { ResumePoint } from "@/lib/types";
 // Groq exposes an OpenAI-compatible API, but ONLY the /chat/completions
 // surface — the newer Responses API is not implemented there. So we use
 // the OpenAI SDK pointed at Groq and call chat.completions.
-const groq = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
-});
+//
+// Built lazily, on first request. At module scope the SDK constructor runs
+// while Next.js collects page data at BUILD time, where no runtime env is
+// available — and it throws "Missing credentials", failing the build.
+let groqClient: OpenAI | null = null;
+
+function getGroq(): OpenAI {
+  if (!groqClient) {
+    groqClient = new OpenAI({
+      apiKey: process.env.GROQ_API_KEY,
+      baseURL: "https://api.groq.com/openai/v1",
+    });
+  }
+  return groqClient;
+}
 
 // A current Groq-hosted model that supports JSON mode via the OpenAI SDK.
 const MODEL = "openai/gpt-oss-20b";
@@ -155,7 +166,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const completion = await groq.chat.completions.create({
+    const completion = await getGroq().chat.completions.create({
       model: MODEL,
       // JSON mode: Groq guarantees the content is a parseable JSON object,
       // so there are no markdown fences to strip.
