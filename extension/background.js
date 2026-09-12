@@ -22,6 +22,8 @@ async function getState() {
     deviceId: null,
     lastResumePoint: null,
     autoEnabled: true,
+    switchCount: 0, // tab switches since the bubble was last shown/dismissed
+    bubbleMutedUntil: 0,
   };
   return { ...defaults, ...(await chrome.storage.local.get(defaults)) };
 }
@@ -87,6 +89,46 @@ async function maybeAutoGenerate(newHost) {
   }
 }
 
+// --- the return bubble ------------------------------------------------------
+
+const SWITCHES_BEFORE_BUBBLE = 2;
+const BUBBLE_MUTE_MS = 3 * 60 * 1000; // after a dismiss, stay quiet a while
+
+// Count tab switches. Once you've bounced a couple of times AND we have
+// something worth handing back, surface the bubble on the page you landed on.
+async function maybeShowBubble(tabId) {
+  const state = await getState();
+  if (!state.lastResumePoint) return;
+  if (Date.now() < state.bubbleMutedUntil) return;
+
+  const switchCount = state.switchCount + 1;
+  await setState({ switchCount });
+  if (switchCount < SWITCHES_BEFORE_BUBBLE) return;
+
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["bubble.js"],
+    });
+    // The script announces itself with `bubbleReady`; we answer with the point.
+    await chrome.tabs.sendMessage(tabId, {
+      type: "bubbleData",
+      point: state.lastResumePoint,
+    });
+    await setState({ switchCount: 0 });
+  } catch {
+    // Restricted page (chrome://, the Web Store, a PDF viewer). Nothing to do.
+  }
+}
+
+// Reopen the tabs captured alongside the displayed Resume Point.
+async function reopenCaptured() {
+  const { lastResumePoint } = await getState();
+  const captured = lastResumePoint?.capturedFrom ?? [];
+  const urls = [...new Set(captured.map((a) => a.url).filter(Boolean))].slice(0, 6);
+  for (const url of urls) await chrome.tabs.create({ url, active: false });
+}
+
 // --- the Resume Point -------------------------------------------------------
 
 async function generateResumePoint(source) {
@@ -132,6 +174,13 @@ async function generateResumePoint(source) {
 
 // --- event wiring -----------------------------------------------------------
 
+// Clicking the toolbar icon opens the side panel instead of a popup.
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.sidePanel
+    .setPanelBehavior({ openPanelOnActionClick: true })
+    .catch((e) => console.error("[Resume] sidePanel setup failed:", e));
+});
+
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
   const tab = await chrome.tabs.get(tabId).catch(() => null);
   if (!tab || !isCapturable(tab.url)) return;
@@ -140,6 +189,7 @@ chrome.tabs.onActivated.addListener(async ({ tabId }) => {
   await maybeAutoGenerate(host);
   await record({ type: "tab_switch", title: tab.title, url: tab.url });
   await setState({ lastHost: host });
+  await maybeShowBubble(tabId);
 });
 
 chrome.tabs.onUpdated.addListener(async (_id, info, tab) => {
@@ -183,6 +233,26 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
     if (msg.type === "setAuto") {
       await setState({ autoEnabled: msg.value });
+      return sendResponse({ ok: true });
+    }
+
+    if (msg.type === "bubbleReady") {
+      const { lastResumePoint } = await getState();
+      if (sender.tab?.id) {
+        chrome.tabs
+          .sendMessage(sender.tab.id, { type: "bubbleData", point: lastResumePoint })
+          .catch(() => {});
+      }
+      return sendResponse({ ok: true });
+    }
+
+    if (msg.type === "bubbleDismissed") {
+      await setState({ switchCount: 0, bubbleMutedUntil: Date.now() + BUBBLE_MUTE_MS });
+      return sendResponse({ ok: true });
+    }
+
+    if (msg.type === "reopen") {
+      await reopenCaptured();
       return sendResponse({ ok: true });
     }
 
