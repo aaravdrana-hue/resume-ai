@@ -6,9 +6,14 @@ globalThis.RESUME_CONFIG = {
   API_BASE: "http://localhost:3000",
 
   // Auto-generation tuning.
-  MIN_ACTIVITIES: 4, // don't summarize thinner context than this
-  COOLDOWN_MS: 90 * 1000, // min gap between auto Resume Points
-  MAX_BUFFER: 60, // cap stored activities
+  //
+  // Tuned for FEWER, RICHER Resume Points. Firing eagerly produces lots of
+  // narrow cards ("YouTube Browsing") because each one consumes the buffer.
+  // Waiting for real context means a card can span Slack docs + GitHub +
+  // Stack Overflow and actually describe a work session.
+  MIN_ACTIVITIES: 8, // don't summarize thinner context than this
+  COOLDOWN_MS: 5 * 60 * 1000, // min gap between auto Resume Points
+  MAX_BUFFER: 80, // cap stored activities
 
   // Privacy (§32): never capture from these. Matched against the hostname.
   IGNORED_HOSTS: [
