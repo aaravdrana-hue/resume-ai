@@ -1,3 +1,4 @@
+import { jsonWithCors, preflight } from "@/lib/cors";
 import { getSupabase } from "@/lib/supabase";
 import type { ResumePoint } from "@/lib/types";
 
@@ -52,12 +53,16 @@ export async function GET(request: Request) {
 
     const points = (data ?? []).map((row) => rowToResumePoint(row as ReminderRow));
 
-    return Response.json({ resumePoints: points });
+    return jsonWithCors({ resumePoints: points });
   } catch (error: unknown) {
     console.error("[resume-points] fetch failed:", error);
-    return Response.json(
+    return jsonWithCors(
       { error: "Failed to load Resume Points.", detail: getErrorMessage(error) },
       { status: 500 }
     );
   }
+}
+
+export function OPTIONS() {
+  return preflight();
 }

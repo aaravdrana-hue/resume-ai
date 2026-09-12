@@ -1,3 +1,4 @@
+import { jsonWithCors, preflight } from "@/lib/cors";
 import OpenAI from "openai";
 import { getSupabase } from "@/lib/supabase";
 import type { ResumePoint } from "@/lib/types";
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
   // Fail fast with a clear message if the key never made it into the env.
   if (!process.env.GROQ_API_KEY) {
     console.error("[summarize] GROQ_API_KEY is not set in .env.local");
-    return Response.json(
+    return jsonWithCors(
       { error: "GROQ_API_KEY is not configured on the server." },
       { status: 500 }
     );
@@ -99,14 +100,14 @@ export async function POST(request: Request) {
     deviceId = typeof body?.deviceId === "string" ? body.deviceId : null;
     source = typeof body?.source === "string" ? body.source : null;
   } catch {
-    return Response.json(
+    return jsonWithCors(
       { error: "Request body must be valid JSON." },
       { status: 400 }
     );
   }
 
   if (!Array.isArray(activities) || activities.length === 0) {
-    return Response.json(
+    return jsonWithCors(
       { error: "Body must include a non-empty `activities` array." },
       { status: 400 }
     );
@@ -135,7 +136,7 @@ export async function POST(request: Request) {
     const content = completion.choices[0]?.message?.content;
     if (!content) {
       console.error("[summarize] Model returned empty content", completion);
-      return Response.json(
+      return jsonWithCors(
         { error: "The model returned an empty response." },
         { status: 502 }
       );
@@ -146,14 +147,18 @@ export async function POST(request: Request) {
     // Save it so it shows up in the dashboard feed on the next load.
     const id = await saveResumePoint(resumePoint, activities, deviceId, source);
 
-    return Response.json({ ...resumePoint, id, saved: id !== null });
+    return jsonWithCors({ ...resumePoint, id, saved: id !== null });
   } catch (error: unknown) {
     // Surface the real upstream error to the server console AND the response
     // so failures are debuggable instead of silent.
     console.error("[summarize] Groq request failed:", error);
-    return Response.json(
+    return jsonWithCors(
       { error: "Failed to create Resume Point.", detail: getErrorMessage(error) },
       { status: 500 }
     );
   }
+}
+
+export function OPTIONS() {
+  return preflight();
 }
