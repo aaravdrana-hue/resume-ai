@@ -6,6 +6,21 @@ were doing, what mattered, and what to do next.
 
 > Your apps remember what you did. Resume remembers *why*.
 
+## What it looks like
+
+Browse, copy, get distracted. Resume reconstructs the work — not the
+browsing — and tells you what to do next.
+
+![The Resume side panel showing a generated Resume Point](docs/side-panel.png)
+
+Switch tabs a couple of times and it offers your work back, in place, on
+whatever page you landed on.
+
+![The return bubble expanded over a page, showing "Welcome back"](docs/bubble.png)
+
+Note what it did *not* say: the activity behind that card included YouTube
+tabs. Resume treated them as noise and named the real thread.
+
 ## How it fits together
 
 ```
