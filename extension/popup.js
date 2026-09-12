@@ -24,32 +24,49 @@ const escapeHtml = (s) =>
 function renderPoint(point, generatedAt) {
   const remembers = Array.isArray(point.remembers) ? point.remembers : [];
 
-  $("body").innerHTML = `
-    <div class="card">
-      <div class="title">${escapeHtml(point.title ?? "Untitled task")}</div>
-      <div class="time">${timeAgo(generatedAt)}${point.saved === false ? " · not saved to DB" : ""}</div>
+  // Packet assembly: each section settles 60ms after the one before it,
+  // rising 6px with its blur clearing.
+  // Returns only the delay, so callers own their own class list (an element
+  // with two `class` attributes silently drops the second one).
+  let step = 0;
+  const delay = () => `style="animation-delay:${step++ * 60}ms"`;
 
-      <div class="label">You were working on</div>
-      <div class="working">${escapeHtml(point.workingOn ?? "")}</div>
+  $("body").innerHTML = `
+    <div class="panel">
+      <div class="settle" ${delay()}>
+        <div class="t-display title">${escapeHtml(point.title ?? "Untitled task")}</div>
+        <div class="time t-mono">${timeAgo(generatedAt)}${
+          point.saved === false ? " · unsaved" : ""
+        }</div>
+      </div>
+
+      <section class="settle" ${delay()}>
+        <div class="t-label">You were working on</div>
+        <div class="working t-body">${escapeHtml(point.workingOn ?? "")}</div>
+      </section>
 
       ${
         remembers.length
-          ? `<div class="label">Resume remembers</div>
-             <ul>${remembers.map((r) => `<li>${escapeHtml(r)}</li>`).join("")}</ul>`
+          ? `<section class="settle" ${delay()}>
+               <div class="t-label">Resume remembers</div>
+               <ul class="t-body">${remembers
+                 .map((r) => `<li>${escapeHtml(r)}</li>`)
+                 .join("")}</ul>
+             </section>`
           : ""
       }
 
-      <div class="next">
-        <div class="label">Next step</div>
+      <section class="next settle" ${delay()}>
+        <div class="t-label">Next step</div>
         <p>${escapeHtml(point.nextStep ?? "")}</p>
-      </div>
+      </section>
     </div>`;
 
   $("resume").hidden = false;
 }
 
 function renderEmpty(bufferCount) {
-  $("body").innerHTML = `<div class="empty">${
+  $("body").innerHTML = `<div class="empty t-body settle">${
     bufferCount
       ? `Watching your work — ${bufferCount} signal${bufferCount === 1 ? "" : "s"} captured. Save a Resume Point whenever you're about to switch away.`
       : "Nothing captured yet. Browse a few pages and copy something, then come back."

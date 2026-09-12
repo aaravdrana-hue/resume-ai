@@ -3,15 +3,35 @@
   <head>
     <meta charset="utf-8" />
     <style>
+      /* Resume — design system ported from DESIGN.md.
+         A ledger kept in a dark reading room. Royal green means "current and
+         confirmed" and is spent on state, never decoration. Depth comes from
+         paper layers, not light. Nothing glows except live indicators. */
       :root {
-        --bg: #08080a;
-        --card: #0c0c0e;
-        --line: rgba(255, 255, 255, 0.07);
-        --text: #f4f4f5;
-        --muted: #8a8a93;
-        --dim: #5f5f68;
-        --accent: #a78bfa;
-        --ease: cubic-bezier(0.16, 1, 0.3, 1);
+        --ink: #0a0c0b;
+        --paper: #121614;
+        --paper-2: #181d1a;
+        --hairline: rgba(243, 245, 243, 0.08);
+        --hairline-strong: rgba(243, 245, 243, 0.14);
+        --royal: #146b3a;
+        --royal-deep: #0d4a29;
+        --royal-bright: #3fbf75;
+        --mint: #b8d8c4;
+        --bone: #f3f5f3;
+        --amber: #d6a84a;
+        --ash: #6f8478;
+        --ember: #c9694a;
+
+        --radius-panel: 12px;
+        --radius-control: 8px;
+        --shadow-float: 0 12px 32px -12px rgba(0, 0, 0, 0.6),
+          0 1px 0 rgba(243, 245, 243, 0.06) inset;
+
+        /* Critically damped, response 0.3–0.4 */
+        --spring: cubic-bezier(0.16, 1, 0.3, 1);
+
+        color-scheme: dark;
+        accent-color: var(--royal);
       }
 
       * { box-sizing: border-box; }
@@ -19,148 +39,212 @@
       body {
         width: 380px;
         margin: 0;
-        padding: 18px;
-        background: var(--bg);
-        color: var(--text);
-        font: 14px/1.5 ui-sans-serif, -apple-system, "Inter", system-ui, sans-serif;
+        background: var(--ink);
+        color: var(--bone);
+        font-family: "Geist Variable", system-ui, -apple-system, sans-serif;
+        font-size: 13.5px;
+        line-height: 20px;
+        font-weight: 440;
         -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
       }
 
+      ::selection { background: var(--royal-deep); color: var(--bone); }
+      * { caret-color: var(--royal-bright); }
+
+      *::-webkit-scrollbar { width: 6px; }
+      *::-webkit-scrollbar-thumb {
+        background: rgba(111, 132, 120, 0.55);
+        border-radius: 999px;
+      }
+      *::-webkit-scrollbar-track { background: transparent; }
+
+      :focus-visible {
+        outline: 2px solid var(--royal-bright);
+        outline-offset: 2px;
+        border-radius: 6px;
+      }
+
+      /* --- type scale ------------------------------------------------- */
+      .t-display {
+        font-size: 22px; line-height: 26px;
+        letter-spacing: -0.02em; font-weight: 560;
+        text-wrap: balance;
+      }
+      .t-title {
+        font-size: 15px; line-height: 20px;
+        letter-spacing: -0.01em; font-weight: 580;
+      }
+      .t-label {
+        font-size: 11.5px; line-height: 16px;
+        letter-spacing: 0.02em; font-weight: 520;
+        color: var(--mint);
+      }
+      .t-body { font-size: 13.5px; line-height: 20px; font-weight: 450; }
+      .t-small { font-size: 12px; line-height: 16px; letter-spacing: 0.005em; font-weight: 460; }
+      .t-mono {
+        font-family: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 12px; line-height: 18px;
+        font-variant-numeric: tabular-nums; font-weight: 420;
+      }
+
+      /* --- 44px header, per the side-panel reference ------------------- */
       header {
+        height: 44px;
         display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        margin-bottom: 16px;
+        align-items: center;
+        gap: 8px;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--hairline);
       }
+      header .name { font-size: 14px; font-weight: 560; letter-spacing: -0.01em; }
+      header .count { margin-left: auto; color: var(--ash); }
 
-      h1 {
-        font-size: 15px;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-        margin: 0;
-      }
+      .mark-live { filter: drop-shadow(0 0 6px rgba(63, 191, 117, 0.45)); }
 
-      .count { font-size: 11px; color: var(--dim); }
+      main { padding: 16px; }
 
-      .label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: var(--dim);
-        margin-bottom: 6px;
-      }
-
-      .card {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 14px;
+      /* --- panels: hairline OR shadow, never both --------------------- */
+      .panel {
+        background: var(--paper);
+        border: 1px solid var(--hairline);
+        border-radius: var(--radius-panel);
         padding: 16px;
-        animation: rise 0.4s var(--ease) both;
       }
 
-      @keyframes rise {
-        from { opacity: 0; transform: translateY(8px); }
-        to   { opacity: 1; transform: none; }
+      /* Packet assembly: sections settle in order, 60ms apart,
+         from 6px below with 4px blur clearing. */
+      .settle { animation: settle 420ms var(--spring) both; }
+      @keyframes settle {
+        from { opacity: 0; transform: translateY(6px); filter: blur(4px); }
+        to   { opacity: 1; transform: none; filter: blur(0); }
       }
 
-      @media (prefers-reduced-motion: reduce) {
-        .card { animation: none; }
+      .title { margin-bottom: 4px; }
+      .time { color: var(--ash); margin-bottom: 16px; }
+
+      section { margin-bottom: 16px; }
+      section:last-of-type { margin-bottom: 0; }
+      .t-label { margin-bottom: 6px; }
+
+      .working { color: var(--bone); }
+
+      ul { margin: 0; padding: 0; list-style: none; }
+      li {
+        display: flex;
+        gap: 9px;
+        margin-bottom: 7px;
+        color: var(--mint);
       }
+      li:last-child { margin-bottom: 0; }
 
-      .title {
-        font-size: 17px;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-        margin-bottom: 4px;
+      /* Active memory marker — state, not decoration. */
+      li::before {
+        content: "";
+        flex: none;
+        width: 5px; height: 5px;
+        margin-top: 7px;
+        border-radius: 999px;
+        background: var(--royal-bright);
       }
-
-      .time { font-size: 11px; color: var(--dim); margin-bottom: 14px; }
-
-      .working { color: #d4d4d8; margin-bottom: 14px; }
-
-      ul { margin: 0 0 14px; padding-left: 16px; color: #b8b8c0; }
-      li { margin-bottom: 4px; }
 
       .next {
-        border-top: 1px solid var(--line);
-        padding-top: 12px;
-        position: relative;
+        border-top: 1px solid var(--hairline);
+        padding-top: 14px;
       }
+      .next .t-label { color: var(--royal-bright); }
+      .next p { margin: 0; font-size: 14.5px; line-height: 21px; font-weight: 480; }
 
-      /* One accent, one meaning: this is the unfinished thread. */
-      .next .label { color: var(--accent); }
-      .next p { margin: 0; font-size: 15px; font-weight: 500; }
-
-      .row { display: flex; gap: 8px; margin-top: 14px; }
+      /* --- controls ---------------------------------------------------- */
+      .row { display: flex; gap: 8px; margin-top: 16px; }
 
       button {
         flex: 1;
-        padding: 10px 14px;
-        border-radius: 10px;
+        height: 36px;
+        padding: 0 14px;
+        border-radius: var(--radius-control);
         border: 1px solid transparent;
         font: inherit;
-        font-weight: 500;
+        font-weight: 520;
         cursor: pointer;
-        transition: background 0.15s var(--ease), transform 0.15s var(--ease);
+        transition: transform 100ms ease-out, background-color 120ms ease-out,
+          color 120ms ease-out, border-color 120ms ease-out;
       }
+      button:active { transform: scale(0.98); }
+      button:disabled { opacity: 0.4; pointer-events: none; }
 
-      button:active { transform: translateY(1px); }
+      .primary { background: var(--royal); color: var(--bone); }
+      .primary:hover { background: #177a43; }
+      .primary:active { background: var(--royal-deep); }
 
-      .primary { background: #fff; color: #000; }
-      .primary:hover { background: #e4e4e7; }
-      .primary:disabled { opacity: 0.5; cursor: default; }
-
-      .ghost {
-        background: transparent;
-        border-color: var(--line);
-        color: var(--muted);
+      .secondary {
+        background: var(--paper-2);
+        color: var(--bone);
+        border-color: var(--hairline);
       }
-      .ghost:hover { background: rgba(255, 255, 255, 0.04); color: var(--text); }
+      .secondary:hover { background: #1d2420; border-color: var(--hairline-strong); }
 
-      .empty { color: var(--dim); font-size: 13px; padding: 8px 0 14px; }
+      .empty { color: var(--ash); padding: 4px 0 2px; }
 
       .err {
-        color: #fca5a5;
-        background: rgba(127, 29, 29, 0.25);
-        border: 1px solid rgba(127, 29, 29, 0.5);
-        border-radius: 10px;
-        padding: 10px;
-        font-size: 12px;
-        margin-bottom: 12px;
+        color: var(--ember);
+        border: 1px solid rgba(201, 105, 74, 0.4);
+        background: rgba(201, 105, 74, 0.1);
+        border-radius: var(--radius-control);
+        padding: 10px 12px;
+        margin-bottom: 14px;
       }
 
       footer {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-top: 14px;
-        font-size: 11px;
-        color: var(--dim);
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid var(--hairline);
+        color: var(--ash);
       }
+      label.toggle {
+        display: flex; align-items: center; gap: 7px;
+        cursor: pointer; color: var(--mint);
+      }
+      label.toggle input { accent-color: var(--royal); margin: 0; }
 
-      label.toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+      @media (prefers-reduced-motion: reduce) {
+        .settle { animation: fade 200ms ease both; }
+        @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+        button, button:active { transition: none; transform: none; }
+        .mark-live { filter: none; }
+      }
     </style>
   </head>
   <body>
     <header>
-      <h1>Resume</h1>
-      <span class="count" id="count"></span>
+      <!-- Two paper layers: the saved state and the current one. -->
+      <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden class="mark-live">
+        <rect x="2.5" y="5.5" width="12" height="12" rx="3" fill="none" stroke="#6F8478" stroke-width="1.5" />
+        <rect x="5.5" y="2.5" width="12" height="12" rx="3" fill="#146B3A" stroke="#3FBF75" stroke-width="1.25" />
+      </svg>
+      <span class="name">Resume</span>
+      <span class="count t-mono" id="count"></span>
     </header>
 
-    <div id="error" class="err" hidden></div>
-    <div id="body"></div>
+    <main>
+      <div id="error" class="err t-small" hidden></div>
+      <div id="body"></div>
 
-    <div class="row">
-      <button class="primary" id="generate">Save Resume Point</button>
-      <button class="ghost" id="resume" hidden>Resume</button>
-    </div>
+      <div class="row">
+        <button class="primary" id="generate">Save Resume Point</button>
+        <button class="secondary" id="resume" hidden>Resume</button>
+      </div>
 
-    <footer>
-      <label class="toggle">
-        <input type="checkbox" id="auto" /> Auto-capture
-      </label>
-      <span id="device"></span>
-    </footer>
+      <footer class="t-small">
+        <label class="toggle">
+          <input type="checkbox" id="auto" /> Auto-capture
+        </label>
+        <span class="t-mono" id="device"></span>
+      </footer>
+    </main>
 
     <script src="config.js"></script>
     <script src="popup.js"></script>
